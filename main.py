@@ -61,6 +61,54 @@ def compression_stats(text, encoded_text):
     ratio = compressed_bits / original_bits * 100 if original_bits else 0
     return original_bits, compressed_bits, ratio 
 
+def print_huffman_tree(node, prefix="", is_left=True):
+    if node is None:
+        return
+
+    if node.char is not None:
+        print(prefix + ("├── " if is_left else "└── ") + f"'{node.char}' ({node.freq})")
+    else:
+        print(prefix + ("├── " if is_left else "└── ") + f"* ({node.freq})")
+
+    new_prefix = prefix + ("│   " if is_left else "    ")
+    print_huffman_tree(node.left, new_prefix, True)
+    print_huffman_tree(node.right, new_prefix, False)
+    
+def save_compressed(encoded_text, codes, filename="compressed.bin"):
+    # Convert bitstring to bytes
+    padding = 8 - (len(encoded_text) % 8)
+    encoded_text += "0" * padding
+
+    # Store padding info at start
+    padded_info = "{0:08b}".format(padding)
+    encoded_text = padded_info + encoded_text
+
+    # Convert to byte array
+    b = bytearray()
+    for i in range(0, len(encoded_text), 8):
+        byte = encoded_text[i:i+8]
+        b.append(int(byte, 2))
+
+    with open(filename, "wb") as f:
+        f.write(b)
+    print(f"Compressed data saved to {filename}")
+    
+def load_compressed(filename, root):
+    with open(filename, "rb") as f:
+        bit_string = ""
+        byte = f.read(1)
+        while byte:
+            byte = ord(byte)
+            bits = bin(byte)[2:].rjust(8, "0")
+            bit_string += bits
+            byte = f.read(1)
+
+    # Remove padding
+    padding = int(bit_string[:8], 2)
+    encoded_text = bit_string[8:-padding] if padding > 0 else bit_string[8:]
+
+    return decode(encoded_text, root)
+
 if __name__ == "__main__":
     text = input("Enter text to compress: ")
     
@@ -82,3 +130,8 @@ if __name__ == "__main__":
     print(f"Original Size (bits): {original_bits}")
     print(f"Compressed Size (bits): {compressed_bits}")
     print(f"Compression Ratio: {ratio:.2f}")
+    print("\n ---- Huffman Tree ----")
+    print_huffman_tree(root)
+    save_compressed(encoded, codes)
+    loaded_decoded = load_compressed("compressed.bin", root)
+    print(f"\nDecoded from file: {loaded_decoded}")
