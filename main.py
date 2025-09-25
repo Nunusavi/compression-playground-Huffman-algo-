@@ -1,5 +1,7 @@
 import heapq
-from collections import  Counter
+import tkinter as tk
+from tkinter import scrolledtext
+from collections import Counter
 
 
 class Node:
@@ -61,18 +63,31 @@ def compression_stats(text, encoded_text):
     ratio = compressed_bits / original_bits * 100 if original_bits else 0
     return original_bits, compressed_bits, ratio 
 
-def print_huffman_tree(node, prefix="", is_left=True):
+def get_huffman_tree_lines(node, prefix="", is_left=True):
+    """Generates a list of strings representing the Huffman tree for display in Tkinter."""
+    lines = []
     if node is None:
-        return
+        return lines
 
     if node.char is not None:
-        print(prefix + ("├── " if is_left else "└── ") + f"'{node.char}' ({node.freq})")
+        lines.append(prefix + ("├── " if is_left else "└── ") + f"'{node.char}' ({node.freq})")
     else:
-        print(prefix + ("├── " if is_left else "└── ") + f"* ({node.freq})")
+        lines.append(prefix + ("├── " if is_left else "└── ") + f"* ({node.freq})")
 
     new_prefix = prefix + ("│   " if is_left else "    ")
-    print_huffman_tree(node.left, new_prefix, True)
-    print_huffman_tree(node.right, new_prefix, False)
+    lines += get_huffman_tree_lines(node.left, new_prefix, True)
+    lines += get_huffman_tree_lines(node.right, new_prefix, False)
+    return lines
+
+def print_huffman_tree(node, prefix="", is_left=True):
+    """Prints the Huffman tree to the console (unchanged)."""
+    lines = get_huffman_tree_lines(node, prefix, is_left)
+    for line in lines:
+        print(line)
+
+def huffman_tree_to_string(node):
+    """Returns the Huffman tree as a string for Tkinter display."""
+    return "\n".join(get_huffman_tree_lines(node))
     
 def save_compressed(encoded_text, codes, filename="compressed.bin"):
     # Convert bitstring to bytes
@@ -108,30 +123,122 @@ def load_compressed(filename, root):
     encoded_text = bit_string[8:-padding] if padding > 0 else bit_string[8:]
 
     return decode(encoded_text, root)
+def launch_gui():
+    def compress_action():
+        text = input_box.get("1.0", tk.END).strip()
+        if not text:
+            return
+
+        root = build_huffman_tree(text)
+        codes = generate_codes(root)
+        encoded = encode(text, codes)
+        decoded = decode(encoded, root)
+        orig, comp, ratio = compression_stats(text, encoded)
+
+        # Huffman Codes
+        codes_box.config(state=tk.NORMAL)
+        codes_box.delete("1.0", tk.END)
+        codes_box.insert(tk.END, "--- Huffman Codes ---\n")
+        for ch, code in codes.items():
+            codes_box.insert(tk.END, f"'{ch}': {code}\n")
+        codes_box.config(state=tk.DISABLED)
+
+        # Encoded Text
+        encoded_box.config(state=tk.NORMAL)
+        encoded_box.delete("1.0", tk.END)
+        encoded_box.insert(tk.END, "--- Encoded Text ---\n")
+        encoded_box.insert(tk.END, encoded)
+        encoded_box.config(state=tk.DISABLED)
+
+        # Decoded Text
+        decoded_box.config(state=tk.NORMAL)
+        decoded_box.delete("1.0", tk.END)
+        decoded_box.insert(tk.END, "--- Decoded Text ---\n")
+        decoded_box.insert(tk.END, decoded)
+        decoded_box.config(state=tk.DISABLED)
+
+        # Huffman Tree
+        tree_box.config(state=tk.NORMAL)
+        tree_box.delete("1.0", tk.END)
+        tree_box.insert(tk.END, "--- Huffman Tree ---\n")
+        tree_box.insert(tk.END, huffman_tree_to_string(root))
+        tree_box.config(state=tk.DISABLED)
+
+        # Stats
+        stats_box.config(state=tk.NORMAL)
+        stats_box.delete("1.0", tk.END)
+        stats_box.insert(tk.END, f"Original: {orig} bits\nCompressed: {comp} bits\nCompression saved: {ratio:.2f}%\n")
+        stats_box.config(state=tk.DISABLED)
+
+    root = tk.Tk()
+    root.title("Huffman Compression Playground")
+
+    tk.Label(root, text="Enter text:").grid(row=0, column=0, sticky="w", padx=5, pady=5)
+    input_box = scrolledtext.ScrolledText(root, height=5, width=60)
+    input_box.grid(row=1, column=0, columnspan=2, sticky="nsew", padx=5)
+
+    compress_btn = tk.Button(root, text="Compress", command=compress_action)
+    compress_btn.grid(row=2, column=0, columnspan=2, pady=5)
+
+    # Huffman Codes
+    tk.Label(root, text="Huffman Codes:").grid(row=3, column=0, sticky="w", padx=5)
+    codes_box = scrolledtext.ScrolledText(root, height=6, width=30, state=tk.DISABLED)
+    codes_box.grid(row=4, column=0, sticky="nsew", padx=5)
+
+    # Encoded Text
+    tk.Label(root, text="Encoded Text:").grid(row=3, column=1, sticky="w", padx=5)
+    encoded_box = scrolledtext.ScrolledText(root, height=6, width=30, state=tk.DISABLED)
+    encoded_box.grid(row=4, column=1, sticky="nsew", padx=5)
+
+    # Decoded Text
+    tk.Label(root, text="Decoded Text:").grid(row=5, column=0, sticky="w", padx=5)
+    decoded_box = scrolledtext.ScrolledText(root, height=4, width=30, state=tk.DISABLED)
+    decoded_box.grid(row=6, column=0, sticky="nsew", padx=5)
+
+    # Huffman Tree
+    tk.Label(root, text="Huffman Tree:").grid(row=5, column=1, sticky="w", padx=5)
+    tree_box = scrolledtext.ScrolledText(root, height=8, width=30, state=tk.DISABLED)
+    tree_box.grid(row=6, column=1, sticky="nsew", padx=5)
+
+    # Compression Stats
+    tk.Label(root, text="Compression Stats:").grid(row=7, column=0, sticky="w", padx=5)
+    stats_box = scrolledtext.ScrolledText(root, height=2, width=60, state=tk.DISABLED)
+    stats_box.grid(row=8, column=0, columnspan=2, sticky="nsew", padx=5, pady=(0,5))
+
+    # Make the grid expand properly
+    for i in range(9):
+        root.grid_rowconfigure(i, weight=1)
+    for j in range(2):
+        root.grid_columnconfigure(j, weight=1)
+
+    root.mainloop()
 
 if __name__ == "__main__":
-    text = input("Enter text to compress: ")
-    
-    root = build_huffman_tree(text)
-    codes = generate_codes(root)
-    encoded = encode(text, codes)
-    decoded = decode(encoded, root)
-    
-    print("\n ---- Huffman Codes ----")
-    for char, code in codes.items():
-        print(f"'{char}': {code}")
+    choice = input("Run GUI (g) or Command Line (c)? ").strip().lower()
+    if choice == 'g':
+        launch_gui()
+    else:
+        text = input("Enter text to compress: ")
+        root = build_huffman_tree(text)
+        codes = generate_codes(root)
+        encoded = encode(text, codes)
+        decoded = decode(encoded, root)
+        
+        print("\n ---- Huffman Codes ----")
+        for char, code in codes.items():
+            print(f"'{char}': {code}")
 
-    print("\n ===== Results =====")
-    print(f"Original Text: {text}")
-    print(f"Encoded Text: {encoded}")
-    print(f"Decoded Text: {decoded}")
+        print("\n ===== Results =====")
+        print(f"Original Text: {text}")
+        print(f"Encoded Text: {encoded}")
+        print(f"Decoded Text: {decoded}")
 
-    original_bits, compressed_bits, ratio = compression_stats(text, encoded)
-    print(f"Original Size (bits): {original_bits}")
-    print(f"Compressed Size (bits): {compressed_bits}")
-    print(f"Compression Ratio: {ratio:.2f}")
-    print("\n ---- Huffman Tree ----")
-    print_huffman_tree(root)
-    save_compressed(encoded, codes)
-    loaded_decoded = load_compressed("compressed.bin", root)
-    print(f"\nDecoded from file: {loaded_decoded}")
+        original_bits, compressed_bits, ratio = compression_stats(text, encoded)
+        print(f"Original Size (bits): {original_bits}")
+        print(f"Compressed Size (bits): {compressed_bits}")
+        print(f"Compression Ratio: {ratio:.2f}")
+        print("\n ---- Huffman Tree ----")
+        print_huffman_tree(root)
+        save_compressed(encoded, codes)
+        loaded_decoded = load_compressed("compressed.bin", root)
+        print(f"\nDecoded from file: {loaded_decoded}")
