@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap"
+        rel="stylesheet">
+    <title>Compression Playground</title>
+</head>
+
+<body class="text-gray-200">
+
+    <div class="min-h-screen container mx-auto px-4 py-8">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-white tracking-tight">
+                Huffman Compression <span class="text-blue-500">Playground</span>
+            </h1>
+            <p class="mt-3 text-lg text-gray-400 max-w-2xl mx-auto">
+                Enter some text below to see how Huffman's algorithm compresses data, and visualize the binary tree it
+                generates.
+            </p>
+        </header>
+
+        <main>
+            <div class="max-w-3xl mx-auto">
+                <div class="relative">
+                    <textarea id="input_box" rows="5"
+                        class="w-full no-scrollbar bg-gray-800 border-2 border-gray-700 rounded-xl p-4 text-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:outline-none focus:border-blue-500 transition-all"
+                        placeholder="Type or paste your text here..."></textarea>
+                    <button id="compress_btn"
+                        class="absolute bottom-4 right-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500">
+                        Compress
+                    </button>
+                </div>
+            </div>
+
+            <div id="results-container" class="mt-10 max-w-7xl mx-auto hidden">
+                <!-- Compression Stats -->
+                <div id="stats_card" class="result-card">
+                    <h2 class="text-xl font-semibold text-blue-400 mb-4">Compression Statistics</h2>
+                    <div id="stats_box" class="flex flex-wrap items-center justify-between gap-4 text-center"></div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                    <!-- Huffman Codes -->
+                    <div id="codes_card" class="result-card">
+                        <h2 class="text-xl font-semibold text-blue-400 mb-4">Huffman Codes</h2>
+                        <div id="codes_box"
+                            class="font-fira text-sm bg-gray-900 p-4 rounded-lg max-h-60 overflow-y-auto no-scrollbar">
+                        </div>
+                    </div>
+                    <!-- Encoded Text -->
+                    <div id="encoded_card" class="result-card">
+                        <h2 class="text-xl font-semibold text-blue-400 mb-4">Encoded Text (Compressed)</h2>
+                        <div id="encoded_box"
+                            class="font-fira text-sm bg-gray-900 p-4 rounded-lg break-all max-h-60 overflow-y-auto no-scrollbar">
+                        </div>
+                    </div>
+                </div>
+                <!-- Decoded Text -->
+                <div id="decoded_card" class="result-card mt-6">
+                    <h2 class="text-xl font-semibold text-blue-400 mb-4">Decoded Text (Original)</h2>
+                    <div id="decoded_box"
+                        class="font-fira text-sm bg-gray-900 p-4 rounded-lg break-words max-h-60 overflow-y-auto no-scrollbar">
+                    </div>
+                </div>
+
+                <!-- Huffman Tree Visualization -->
+                <div id="tree_card" class="result-card mt-6">
+                    <h2 class="text-xl font-semibold text-blue-400 mb-4 text-center">Huffman Tree Visualization</h2>
+                    <div id="tree_box" class="w-full overflow-x-auto pb-4 no-scrollbar flex justify-center">
+                        <p class="text-center text-gray-500">The tree will be displayed here.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+<script src="/script.js"></script>
+
+</html>
