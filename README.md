@@ -2,6 +2,9 @@
 
 A comprehensive educational tool for understanding and visualizing Huffman compression algorithm. This project provides both a command-line interface and an interactive web-based visualization to demonstrate how Huffman coding works for data compression.
 
+## Check out the web demo version 👇
+https://nunusavi.github.io/compression-playground-Huffman-algo-/
+
 ## 🌟 Features
 
 - **Dual Interface**: Both command-line and web-based interfaces
