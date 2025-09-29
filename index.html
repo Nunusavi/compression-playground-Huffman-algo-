@@ -72,8 +72,20 @@
                 <!-- Huffman Tree Visualization -->
                 <div id="tree_card" class="result-card mt-6">
                     <h2 class="text-xl font-semibold text-blue-400 mb-4 text-center">Huffman Tree Visualization</h2>
-                    <div id="tree_box" class="w-full overflow-x-auto pb-4 no-scrollbar flex justify-center">
-                        <p class="text-center text-gray-500">The tree will be displayed here.</p>
+                    <div id="tree_box" class="w-full pb-4">
+                        <div id="tree_controls" class="flex flex-wrap gap-2 items-center justify-center mb-3 hidden">
+                            <button data-action="zoom-in" class="tree-ctl-btn">Zoom In +</button>
+                            <button data-action="zoom-out" class="tree-ctl-btn">Zoom Out −</button>
+                            <button data-action="fit" class="tree-ctl-btn">Fit</button>
+                            <button data-action="reset" class="tree-ctl-btn">Reset</button>
+                            <button data-action="toggle-edge-labels" class="tree-ctl-btn">Toggle 0/1</button>
+                            <button data-action="toggle-internals" class="tree-ctl-btn">Toggle Internal Σ</button>
+                        </div>
+                        <div id="tree_svg_wrapper" class="tree-svg-wrapper no-scrollbar">
+                            <p class="text-center text-gray-500 mt-24">The tree will be displayed here.</p>
+                        </div>
+                        <p id="tree_hint" class="text-center text-xs text-gray-500 mt-2 hidden">Scroll to zoom, drag
+                            background to pan.</p>
                     </div>
                 </div>
             </div>
@@ -81,4 +93,5 @@
     </div>
 </body>
 <script src="script.js"></script>
+
 </html>

@@ -100,31 +100,134 @@ function compressionStats(text, encodedText) {
     };
 }
 
-function createVisualTree(node) {
-    if (!node) return '';
+// --- New SVG Tree Visualization ---
+// Layout algorithm: 1st pass to compute subtree widths, 2nd pass assign x positions; y by depth.
+function buildSvgTree(root, options = {}) {
+    const cfg = Object.assign({
+        levelGap: 80,
+        siblingGap: 22,
+        nodeRadius: 18,
+        fontSize: 12,
+        showEdgeLabels: true,
+        showInternal: true
+    }, options);
+    if (!root) return { svg: null, view: { width: 0, height: 0 } };
 
-    const charDisplay = node.char === ' ' ? "' '" : (node.char || 'Σ');
-    const charClass = node.char !== null ? 'char' : '';
-    let nodeHtml = `
-                <div class="tree-node">
-                    <span class="${charClass}">${charDisplay}</span>
-                    <span class="freq">${node.freq}</span>
-                </div>
-            `;
+    // First compute subtree widths recursively.
+    function measure(node) {
+        if (!node) return 0;
+        if (!node.left && !node.right) {
+            node._subWidth = cfg.nodeRadius * 2 + cfg.siblingGap;
+            return node._subWidth;
+        }
+        const lw = measure(node.left);
+        const rw = measure(node.right);
+        const combined = lw + rw + cfg.siblingGap;
+        node._subWidth = Math.max(combined, cfg.nodeRadius * 2 + cfg.siblingGap);
+        return node._subWidth;
+    }
+    measure(root);
 
-    if (node.left || node.right) {
-        let childrenHtml = '<div class="tree-children">';
+    const nodes = [];
+    const edges = [];
+    const depths = [];
+
+    function assign(node, xStart, depth) {
+        if (!node) return;
+        depths.push(depth);
+        const width = node._subWidth;
+        let x;
+        if (!node.left && !node.right) {
+            x = xStart + width / 2;
+        } else {
+            x = xStart + width / 2;
+        }
+        const y = depth * cfg.levelGap + cfg.nodeRadius + 10;
+        node._pos = { x, y, depth };
+        nodes.push(node);
         if (node.left) {
-            childrenHtml += `<div class="tree-branch">${createVisualTree(node.left)}</div>`;
+            const lw = node.left._subWidth;
+            assign(node.left, xStart, depth + 1);
+            edges.push({ from: node, to: node.left, bit: 0 });
+            xStart += lw + cfg.siblingGap;
         }
         if (node.right) {
-            childrenHtml += `<div class="tree-branch">${createVisualTree(node.right)}</div>`;
+            assign(node.right, xStart, depth + 1);
+            edges.push({ from: node, to: node.right, bit: 1 });
         }
-        childrenHtml += '</div>';
-        nodeHtml += childrenHtml;
     }
+    assign(root, 0, 0);
 
-    return `<div class="tree-container">${nodeHtml}</div>`;
+    const maxDepth = Math.max(...depths, 0);
+    const width = root._subWidth + cfg.nodeRadius * 2;
+    const height = (maxDepth + 1) * cfg.levelGap + cfg.nodeRadius * 2 + 40;
+
+    // Build SVG elements
+    const svgns = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgns, 'svg');
+    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+    svg.setAttribute('role', 'img');
+    svg.setAttribute('aria-label', 'Huffman tree visualization');
+
+    const gEdges = document.createElementNS(svgns, 'g');
+    const gNodes = document.createElementNS(svgns, 'g');
+
+    edges.forEach(e => {
+        const line = document.createElementNS(svgns, 'line');
+        line.setAttribute('x1', e.from._pos.x);
+        line.setAttribute('y1', e.from._pos.y);
+        line.setAttribute('x2', e.to._pos.x);
+        line.setAttribute('y2', e.to._pos.y);
+        line.setAttribute('class', 'tree-edge');
+        gEdges.appendChild(line);
+        if (cfg.showEdgeLabels) {
+            const mx = (e.from._pos.x + e.to._pos.x) / 2;
+            const my = (e.from._pos.y + e.to._pos.y) / 2 - 6;
+            const lbl = document.createElementNS(svgns, 'text');
+            lbl.setAttribute('x', mx);
+            lbl.setAttribute('y', my);
+            lbl.setAttribute('text-anchor', 'middle');
+            lbl.setAttribute('class', 'tree-edge-label');
+            lbl.textContent = e.bit;
+            gEdges.appendChild(lbl);
+        }
+    });
+
+    nodes.forEach(n => {
+        const group = document.createElementNS(svgns, 'g');
+        group.setAttribute('transform', `translate(${n._pos.x},${n._pos.y})`);
+        const circle = document.createElementNS(svgns, 'circle');
+        circle.setAttribute('r', cfg.nodeRadius);
+        circle.setAttribute('class', 'tree-node-circle' + (!n.left && !n.right ? ' tree-node-leaf' : ''));
+        group.appendChild(circle);
+        const ch = (n.char === ' ' ? '␠' : n.char);
+        if (n.char !== null) {
+            const t = document.createElementNS(svgns, 'text');
+            t.setAttribute('class', 'tree-node-text');
+            t.setAttribute('text-anchor', 'middle');
+            t.setAttribute('dy', '4');
+            t.textContent = ch;
+            group.appendChild(t);
+        } else if (cfg.showInternal) {
+            const t = document.createElementNS(svgns, 'text');
+            t.setAttribute('class', 'tree-node-text');
+            t.setAttribute('text-anchor', 'middle');
+            t.setAttribute('dy', '4');
+            t.textContent = 'Σ';
+            group.appendChild(t);
+        }
+        const f = document.createElementNS(svgns, 'text');
+        f.setAttribute('class', 'tree-node-freq');
+        f.setAttribute('text-anchor', 'middle');
+        f.setAttribute('dy', cfg.nodeRadius + 12);
+        f.textContent = n.freq;
+        group.appendChild(f);
+        gNodes.appendChild(group);
+    });
+
+    svg.appendChild(gEdges);
+    svg.appendChild(gNodes);
+    return { svg, view: { width, height } };
 }
 
 // --- UI Interaction Logic ---
@@ -136,6 +239,100 @@ const codesBox = document.getElementById('codes_box');
 const encodedBox = document.getElementById('encoded_box');
 const decodedBox = document.getElementById('decoded_box');
 const treeBox = document.getElementById('tree_box');
+const treeControls = document.getElementById('tree_controls');
+const treeWrapper = document.getElementById('tree_svg_wrapper');
+let lastTreeState = { root: null, options: { showEdgeLabels: true, showInternal: true } };
+
+function renderTree(root) {
+    lastTreeState.root = root;
+    treeWrapper.innerHTML = '';
+    if (!root) return;
+    const { svg } = buildSvgTree(root, lastTreeState.options);
+    if (!svg) return;
+
+    const outerG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    // Move actual content into outerG for transform manipulations
+    while (svg.firstChild) outerG.appendChild(svg.firstChild);
+    svg.appendChild(outerG);
+    outerG.setAttribute('data-pan-root', '');
+
+    treeWrapper.appendChild(svg);
+    treeControls.classList.remove('hidden');
+    document.getElementById('tree_hint').classList.remove('hidden');
+
+    // Pan & zoom state
+    let scale = 1;
+    let translate = { x: 0, y: 0 };
+    let isPanning = false;
+    let panStart = { x: 0, y: 0 };
+    let translateStart = { x: 0, y: 0 };
+
+    function applyTransform() {
+        outerG.setAttribute('transform', `translate(${translate.x},${translate.y}) scale(${scale})`);
+    }
+
+    function fitToView() {
+        const bbox = outerG.getBBox();
+        const w = treeWrapper.clientWidth;
+        const h = treeWrapper.clientHeight;
+        if (bbox.width === 0 || bbox.height === 0) return;
+        const s = Math.min((w - 40) / bbox.width, (h - 40) / bbox.height);
+        scale = Math.min(s, 2.5);
+        translate.x = (w - bbox.width * scale) / 2 - bbox.x * scale;
+        translate.y = 20 - bbox.y * scale;
+        applyTransform();
+    }
+
+    // Initial fit
+    fitToView();
+
+    // Pan handling
+    treeWrapper.onmousedown = (e) => {
+        if (e.target.closest('button')) return; // ignore control clicks
+        isPanning = true;
+        panStart = { x: e.clientX, y: e.clientY };
+        translateStart = { ...translate };
+    };
+    window.addEventListener('mouseup', () => { isPanning = false; });
+    window.addEventListener('mousemove', (e) => {
+        if (!isPanning) return;
+        const dx = e.clientX - panStart.x;
+        const dy = e.clientY - panStart.y;
+        translate.x = translateStart.x + dx;
+        translate.y = translateStart.y + dy;
+        applyTransform();
+    });
+
+    // Wheel zoom
+    treeWrapper.onwheel = (e) => {
+        e.preventDefault();
+        const delta = -e.deltaY;
+        const factor = delta > 0 ? 1.1 : 0.9;
+        const rect = treeWrapper.getBoundingClientRect();
+        const cx = e.clientX - rect.left;
+        const cy = e.clientY - rect.top;
+        const beforeX = (cx - translate.x) / scale;
+        const beforeY = (cy - translate.y) / scale;
+        scale = Math.min(5, Math.max(0.2, scale * factor));
+        translate.x = cx - beforeX * scale;
+        translate.y = cy - beforeY * scale;
+        applyTransform();
+    };
+
+    // Control buttons
+    treeControls.querySelectorAll('button').forEach(btn => {
+        btn.onclick = () => {
+            const action = btn.getAttribute('data-action');
+            if (action === 'zoom-in') { scale = Math.min(5, scale * 1.2); }
+            else if (action === 'zoom-out') { scale = Math.max(0.2, scale / 1.2); }
+            else if (action === 'fit') { fitToView(); return; }
+            else if (action === 'reset') { scale = 1; translate = { x: 0, y: 0 }; }
+            else if (action === 'toggle-edge-labels') { lastTreeState.options.showEdgeLabels = !lastTreeState.options.showEdgeLabels; renderTree(root); return; }
+            else if (action === 'toggle-internals') { lastTreeState.options.showInternal = !lastTreeState.options.showInternal; renderTree(root); return; }
+            applyTransform();
+        };
+    });
+}
 const statsBox = document.getElementById('stats_box');
 
 function createStatElement(label, value, unit) {
@@ -178,17 +375,8 @@ function compressAction() {
                 ${createStatElement('Space Saved', stats.ratio.toFixed(2), '%')}
             `;
 
-    // Visualize Huffman Tree
-    treeBox.innerHTML = createVisualTree(root);
-
-    // Center the tree visually within the scrollable container.
-    // A timeout ensures the browser has rendered the tree before we measure it.
-    setTimeout(() => {
-        const treeElement = treeBox.firstChild;
-        if (treeElement && treeElement.offsetWidth > treeBox.offsetWidth) {
-            treeBox.scrollLeft = (treeElement.offsetWidth - treeBox.offsetWidth) / 2;
-        }
-    }, 0);
+    // Visualize Huffman Tree (SVG)
+    renderTree(root);
 
     // Show and animate results
     resultsContainer.classList.remove('hidden');
