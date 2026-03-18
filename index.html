@@ -13,19 +13,18 @@
 </head>
 
 <body class="text-gray-200">
-
     <div class="min-h-screen container mx-auto px-4 py-8">
         <header class="text-center mb-8">
             <h1 class="text-4xl md:text-5xl font-bold text-white tracking-tight">
-                Huffman Compression <span class="text-blue-500">Playground</span>
+                Compression <span class="text-blue-500">Playground</span>
             </h1>
             <p class="mt-3 text-lg text-gray-400 max-w-2xl mx-auto">
-                Enter some text below to see how Huffman's algorithm compresses data, and visualize the binary tree it
-                generates.
+                Visualize and compare compression algorithms step by step. Built for learning.
             </p>
         </header>
 
         <main>
+            <!-- Input -->
             <div class="max-w-3xl mx-auto">
                 <div class="relative">
                     <textarea id="input_box" rows="5"
@@ -33,65 +32,243 @@
                         placeholder="Type or paste your text here..."></textarea>
                     <button id="compress_btn"
                         class="absolute bottom-4 right-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500">
-                        Compress
+                        Analyze
                     </button>
                 </div>
+                <!-- Preset examples -->
+                <div class="flex flex-wrap gap-2 mt-3 items-center">
+                    <span class="text-xs text-gray-500 mr-1">Try:</span>
+                    <button class="preset-btn" data-text="hello world">hello world</button>
+                    <button class="preset-btn" data-text="AAABBBCCCDDDEEE">Skewed freqs</button>
+                    <button class="preset-btn" data-text="abcdefgh">Uniform freqs</button>
+                    <button class="preset-btn" data-text="AAAAAAAAABBBCCD">RLE-friendly</button>
+                    <button class="preset-btn" data-text="the quick brown fox jumps over the lazy dog">Pangram</button>
+                </div>
             </div>
 
+            <!-- Results -->
             <div id="results-container" class="mt-10 max-w-7xl mx-auto hidden">
-                <!-- Compression Stats -->
-                <div id="stats_card" class="result-card">
-                    <h2 class="text-xl font-semibold text-blue-400 mb-4">Compression Statistics</h2>
-                    <div id="stats_box" class="flex flex-wrap items-center justify-between gap-4 text-center"></div>
+
+                <!-- Tab Bar -->
+                <div class="tab-bar mb-6">
+                    <button class="tab-btn tab-btn-active" data-tab="huffman">Huffman Coding</button>
+                    <button class="tab-btn" data-tab="rle">Run-Length Encoding</button>
+                    <button class="tab-btn" data-tab="compare">Compare</button>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-                    <!-- Huffman Codes -->
-                    <div id="codes_card" class="result-card">
-                        <h2 class="text-xl font-semibold text-blue-400 mb-4">Huffman Codes</h2>
-                        <div id="codes_box"
-                            class="font-fira text-sm bg-gray-900 p-4 rounded-lg max-h-60 overflow-y-auto no-scrollbar">
+                <!-- ===== HUFFMAN TAB ===== -->
+                <div id="tab-huffman" class="tab-panel">
+
+                    <!-- Frequency Chart -->
+                    <div class="result-card">
+                        <h2 class="card-title">Character Frequencies</h2>
+                        <p class="card-subtitle">Higher-frequency characters get shorter binary codes in the Huffman tree.</p>
+                        <div id="freq_chart" class="mt-4 space-y-1.5 max-h-64 overflow-y-auto no-scrollbar"></div>
+                    </div>
+
+                    <!-- Step-by-Step Stepper -->
+                    <div class="result-card mt-6">
+                        <h2 class="card-title">Step-by-Step Tree Construction</h2>
+                        <p class="card-subtitle">The algorithm repeatedly merges the two lowest-frequency nodes until one tree remains.</p>
+
+                        <!-- Stepper controls -->
+                        <div class="flex flex-wrap gap-2 items-center mt-4">
+                            <button id="step_reset_btn" class="tree-ctl-btn">⟳ Reset</button>
+                            <button id="step_prev_btn" class="tree-ctl-btn" disabled>◀ Prev</button>
+                            <span id="step_counter" class="text-sm text-gray-400 px-2 font-fira">—</span>
+                            <button id="step_next_btn" class="tree-ctl-btn">Next ▶</button>
+                            <button id="step_play_btn" class="tree-ctl-btn step-play-btn">▶ Auto-Play</button>
+                        </div>
+
+                        <!-- Step description -->
+                        <div id="step_description" class="step-description mt-4"></div>
+
+                        <!-- Priority queue state -->
+                        <div class="mt-5">
+                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-2">Priority Queue State</p>
+                            <div id="step_queue"></div>
+                        </div>
+
+                        <!-- Partial tree -->
+                        <div class="mt-5">
+                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1">Tree Progress <span class="normal-case font-normal text-gray-600">— dimmed nodes are not yet built</span></p>
+                            <div id="step_tree_wrapper" class="step-tree-wrapper no-scrollbar mt-2"></div>
+                        </div>
+
+                        <!-- Legend -->
+                        <div class="step-legend mt-3">
+                            <span class="legend-dot legend-settled"></span><span>Existing</span>
+                            <span class="legend-dot legend-merging ml-4"></span><span>Being merged</span>
+                            <span class="legend-dot legend-new ml-4"></span><span>Newly created</span>
+                            <span class="legend-dot legend-future ml-4"></span><span>Not yet built</span>
                         </div>
                     </div>
-                    <!-- Encoded Text -->
-                    <div id="encoded_card" class="result-card">
-                        <h2 class="text-xl font-semibold text-blue-400 mb-4">Encoded Text (Compressed)</h2>
-                        <div id="encoded_box"
-                            class="font-fira text-sm bg-gray-900 p-4 rounded-lg break-all max-h-60 overflow-y-auto no-scrollbar">
+
+                    <!-- Stats -->
+                    <div class="result-card mt-6">
+                        <h2 class="card-title">Compression Statistics</h2>
+                        <div id="stats_box" class="flex flex-wrap items-center justify-between gap-4 text-center mt-2"></div>
+                    </div>
+
+                    <!-- Codes + Encoded -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                        <div class="result-card">
+                            <h2 class="card-title">Huffman Codes</h2>
+                            <p class="card-subtitle">Sorted shortest first. Shorter code = higher frequency.</p>
+                            <div id="codes_box"
+                                class="font-fira text-sm bg-gray-900 p-4 rounded-lg max-h-60 overflow-y-auto no-scrollbar mt-3">
+                            </div>
+                        </div>
+                        <div class="result-card">
+                            <h2 class="card-title">Encoded Output</h2>
+                            <div id="encoded_box"
+                                class="font-fira text-sm bg-gray-900 p-4 rounded-lg break-all max-h-60 overflow-y-auto no-scrollbar mt-3">
+                            </div>
                         </div>
                     </div>
+
+                    <!-- Decoded -->
+                    <div class="result-card mt-6">
+                        <h2 class="card-title">Decoded (Verification)</h2>
+                        <div id="decoded_box"
+                            class="font-fira text-sm bg-gray-900 p-4 rounded-lg break-words max-h-40 overflow-y-auto no-scrollbar mt-3">
+                        </div>
+                    </div>
+
+                    <!-- Final Tree -->
+                    <div class="result-card mt-6">
+                        <h2 class="card-title text-center">Final Huffman Tree</h2>
+                        <div class="mt-4">
+                            <div id="tree_controls" class="flex flex-wrap gap-2 items-center justify-center mb-3 hidden">
+                                <button data-action="zoom-in" class="tree-ctl-btn">Zoom In +</button>
+                                <button data-action="zoom-out" class="tree-ctl-btn">Zoom Out −</button>
+                                <button data-action="fit" class="tree-ctl-btn">Fit</button>
+                                <button data-action="reset" class="tree-ctl-btn">Reset</button>
+                                <button data-action="toggle-edge-labels" class="tree-ctl-btn">Toggle 0/1</button>
+                                <button data-action="toggle-internals" class="tree-ctl-btn">Toggle Σ</button>
+                            </div>
+                            <div id="tree_svg_wrapper" class="tree-svg-wrapper no-scrollbar"></div>
+                            <p id="tree_hint" class="text-center text-xs text-gray-500 mt-2 hidden">Scroll to zoom · Drag to pan</p>
+                        </div>
+                    </div>
+
                 </div>
-                <!-- Decoded Text -->
-                <div id="decoded_card" class="result-card mt-6">
-                    <h2 class="text-xl font-semibold text-blue-400 mb-4">Decoded Text (Original)</h2>
-                    <div id="decoded_box"
-                        class="font-fira text-sm bg-gray-900 p-4 rounded-lg break-words max-h-60 overflow-y-auto no-scrollbar">
+
+                <!-- ===== RLE TAB ===== -->
+                <div id="tab-rle" class="tab-panel hidden">
+                    <div class="result-card">
+                        <h2 class="card-title">Run-Length Encoding</h2>
+                        <p class="card-subtitle">RLE replaces consecutive runs of the same character with a count + character pair (e.g., "AAABBB" → "3A3B"). It excels with repetitive data but can expand input with no repeated characters.</p>
+                        <div id="rle_stats_box"
+                            class="flex flex-wrap items-center justify-between gap-4 text-center border-t border-gray-700 pt-4 mt-4">
+                        </div>
+                    </div>
+                    <div class="result-card mt-6">
+                        <h2 class="card-title">Run Visualization</h2>
+                        <p class="card-subtitle">Each block is one run of identical characters. The encoded token appears at the bottom of each block.</p>
+                        <div id="rle_runs_box" class="flex flex-wrap gap-3 mt-4 p-4 bg-gray-900 rounded-lg min-h-16"></div>
+                    </div>
+                    <div class="result-card mt-6">
+                        <h2 class="card-title">RLE Encoded Output</h2>
+                        <div id="rle_encoded_box"
+                            class="font-fira text-sm bg-gray-900 p-4 rounded-lg break-all max-h-40 overflow-y-auto no-scrollbar mt-3">
+                        </div>
                     </div>
                 </div>
 
-                <!-- Huffman Tree Visualization -->
-                <div id="tree_card" class="result-card mt-6">
-                    <h2 class="text-xl font-semibold text-blue-400 mb-4 text-center">Huffman Tree Visualization</h2>
-                    <div id="tree_box" class="w-full pb-4">
-                        <div id="tree_controls" class="flex flex-wrap gap-2 items-center justify-center mb-3 hidden">
-                            <button data-action="zoom-in" class="tree-ctl-btn">Zoom In +</button>
-                            <button data-action="zoom-out" class="tree-ctl-btn">Zoom Out −</button>
-                            <button data-action="fit" class="tree-ctl-btn">Fit</button>
-                            <button data-action="reset" class="tree-ctl-btn">Reset</button>
-                            <button data-action="toggle-edge-labels" class="tree-ctl-btn">Toggle 0/1</button>
-                            <button data-action="toggle-internals" class="tree-ctl-btn">Toggle Internal Σ</button>
+                <!-- ===== COMPARE TAB ===== -->
+                <div id="tab-compare" class="tab-panel hidden">
+                    <div class="result-card">
+                        <h2 class="card-title">Algorithm Comparison</h2>
+                        <p class="card-subtitle">Same input, different strategies. The winning algorithm depends on the structure of the data.</p>
+                        <div class="overflow-x-auto mt-6">
+                            <table class="comp-table w-full">
+                                <thead>
+                                    <tr>
+                                        <th class="comp-th text-left">Algorithm</th>
+                                        <th class="comp-th text-center">Size (bits)</th>
+                                        <th class="comp-th text-center">Space Saved</th>
+                                        <th class="comp-th text-center">Avg bits/char</th>
+                                        <th class="comp-th text-left">Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="compare_tbody"></tbody>
+                            </table>
                         </div>
-                        <div id="tree_svg_wrapper" class="tree-svg-wrapper no-scrollbar">
-                            <p class="text-center text-gray-500 mt-24">The tree will be displayed here.</p>
-                        </div>
-                        <p id="tree_hint" class="text-center text-xs text-gray-500 mt-2 hidden">Scroll to zoom, drag
-                            background to pan.</p>
                     </div>
                 </div>
+
             </div>
         </main>
-    </div>
+
+        <!-- ===== FILE COMPRESSION SECTION ===== -->
+        <section id="file-section" class="mt-20 max-w-7xl mx-auto px-0">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-bold text-white">
+                    File <span class="text-blue-500">Compression</span>
+                </h2>
+                <p class="mt-2 text-base text-gray-400 max-w-2xl mx-auto">
+                    Upload any file and apply Huffman or RLE byte-by-byte. See how file type affects compression.
+                </p>
+            </div>
+
+            <!-- Drop zone -->
+            <div class="result-card visible" id="file-drop-card">
+                <div id="file-drop-zone" class="file-drop-zone" role="button" tabindex="0"
+                    aria-label="Drop a file here or click to browse">
+                    <div class="file-drop-icon">&#128462;</div>
+                    <p class="file-drop-primary">Drop a file here</p>
+                    <p class="file-drop-secondary">or <span class="file-drop-link">click to browse</span></p>
+                    <p class="file-drop-hint">Text, CSV, JSON, images (PNG/JPG/etc.), any binary &middot; Max 5 MB</p>
+                    <input type="file" id="file-input" class="file-input-hidden" tabindex="-1">
+                </div>
+                <p id="file-error" class="file-error hidden"></p>
+            </div>
+
+            <!-- Processing spinner -->
+            <div id="file-spinner" class="file-spinner hidden">
+                <div class="file-spinner-ring"></div>
+                <p class="file-spinner-label">Analyzing file&hellip;</p>
+            </div>
+
+            <!-- File info -->
+            <div id="file-info-card" class="result-card mt-6 hidden">
+                <h2 class="card-title">File Info</h2>
+                <div id="file-meta" class="flex flex-wrap gap-6 mt-3 text-sm text-center"></div>
+                <p id="file-sample-notice" class="file-sample-notice hidden mt-3"></p>
+            </div>
+
+            <!-- Preview -->
+            <div id="file-preview-card" class="result-card mt-6 hidden">
+                <h2 class="card-title">Preview</h2>
+                <div id="file-preview-content" class="mt-3"></div>
+            </div>
+
+            <!-- Results -->
+            <div id="file-results-card" class="result-card mt-6 hidden">
+                <h2 class="card-title">Compression Results</h2>
+                <p class="card-subtitle">File treated as raw bytes (0–255). Hover bars to compare.</p>
+                <div id="file-stats-row" class="flex flex-wrap justify-center gap-4 text-center mt-4 border-t border-gray-700 pt-4"></div>
+                <div class="mt-6">
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">Size Comparison</p>
+                    <div id="file-size-bars" class="space-y-3"></div>
+                </div>
+                <div class="mt-6 flex flex-wrap gap-3">
+                    <button id="file-dl-huffman" class="file-dl-btn" disabled>&#8595; Download Huffman (.json)</button>
+                    <button id="file-dl-rle" class="file-dl-btn" disabled>&#8595; Download RLE (.json)</button>
+                </div>
+                <p class="text-xs text-gray-600 mt-3">Downloaded files use a JSON educational format (codes + base64-packed bits). A production compressor would use a compact binary format.</p>
+            </div>
+
+            <!-- Educational notes -->
+            <div id="file-edu-card" class="result-card mt-6 hidden">
+                <h2 class="card-title">Why Does This File Type Compress Like This?</h2>
+                <div id="file-edu-content" class="mt-4 space-y-4 text-sm"></div>
+            </div>
+        </section>
+
+    </div><!-- end container -->
+    <script src="script.js"></script>
 </body>
-<script src="script.js"></script>
 
 </html>

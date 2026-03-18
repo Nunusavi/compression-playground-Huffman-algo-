@@ -243,3 +243,474 @@ body {
     height: 2px;
     background-color: #4b5563;
 }
+
+/* ============================================================
+   TAB SYSTEM
+   ============================================================ */
+.tab-bar {
+    display: flex;
+    gap: 0.25rem;
+    border-bottom: 2px solid #374151;
+    padding-bottom: 0;
+}
+
+.tab-btn {
+    padding: 0.5rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #9ca3af;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    border-radius: 0.375rem 0.375rem 0 0;
+    transition: color 0.2s, border-color 0.2s;
+    background: transparent;
+}
+.tab-btn:hover { color: #e5e7eb; }
+.tab-btn-active { color: #60a5fa; border-bottom-color: #2563eb; }
+
+/* ============================================================
+   CARD TITLES & SUBTITLES
+   ============================================================ */
+.card-title { font-size: 1.125rem; font-weight: 600; color: #60a5fa; }
+.card-subtitle { font-size: 0.875rem; color: #6b7280; margin-top: 0.25rem; }
+
+/* ============================================================
+   PRESET BUTTONS
+   ============================================================ */
+.preset-btn {
+    padding: 0.3rem 0.8rem;
+    font-size: 0.75rem;
+    background: #1f2937;
+    color: #9ca3af;
+    border: 1px solid #374151;
+    border-radius: 9999px;
+    transition: background 0.15s, color 0.15s;
+}
+.preset-btn:hover { background: #374151; color: #e5e7eb; }
+
+/* ============================================================
+   FREQUENCY BAR CHART
+   ============================================================ */
+.freq-row {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    min-height: 1.5rem;
+}
+.freq-label {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.875rem;
+    color: #60a5fa;
+    width: 1.75rem;
+    text-align: right;
+    flex-shrink: 0;
+}
+.freq-bar-track {
+    flex: 1;
+    height: 0.875rem;
+    background: #111827;
+    border-radius: 9999px;
+    overflow: hidden;
+}
+.freq-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #1d4ed8, #6d28d9);
+    border-radius: 9999px;
+    transition: width 0.35s ease-out;
+    min-width: 4px;
+}
+.freq-value {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.75rem;
+    color: #9ca3af;
+    width: 2rem;
+    text-align: left;
+    flex-shrink: 0;
+}
+
+/* ============================================================
+   STEPPER
+   ============================================================ */
+.step-play-btn {
+    background: #1e3a8a;
+    border-color: #2563eb !important;
+    color: #93c5fd;
+}
+.step-play-btn:hover { background: #1d4ed8 !important; color: white; }
+
+.step-description {
+    font-size: 0.875rem;
+    color: #d1d5db;
+    background: #111827;
+    border-left: 3px solid #2563eb;
+    padding: 0.75rem 1rem;
+    border-radius: 0 0.5rem 0.5rem 0;
+    line-height: 1.65;
+    min-height: 3rem;
+}
+
+.step-tree-wrapper {
+    position: relative;
+    width: 100%;
+    height: 340px;
+    background: radial-gradient(circle at 50% 50%, #1e293b 0%, #111827 70%);
+    border: 1px solid #374151;
+    border-radius: 0.75rem;
+    overflow: hidden;
+}
+.step-tree-wrapper svg { width: 100%; height: 100%; font-family: 'Fira Code', monospace; }
+
+.stepper-merge-action {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: #111827;
+    border: 1px solid #374151;
+    border-radius: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+.stepper-op { font-size: 1.1rem; color: #9ca3af; font-weight: 700; padding: 0 0.2rem; }
+.stepper-queue-label { font-size: 0.75rem; color: #6b7280; margin-bottom: 0.375rem; }
+.stepper-queue-items { display: flex; flex-wrap: wrap; gap: 0.375rem; }
+
+/* Step animation legend */
+.step-legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0;
+    font-size: 0.75rem;
+    color: #9ca3af;
+}
+.legend-dot {
+    display: inline-block;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-right: 0.3rem;
+}
+.legend-settled { background: #1f2937; border: 2px solid #2563eb; }
+.legend-merging { background: #78350f; border: 2px solid #f59e0b; }
+.legend-new     { background: #14532d; border: 2px solid #22c55e; }
+.legend-future  { background: transparent; border: 2px dashed #4b5563; }
+
+/* ============================================================
+   QUEUE CARDS
+   ============================================================ */
+.queue-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.75rem;
+    padding: 0.375rem 0.625rem;
+    background: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 0.5rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.queue-card-merging {
+    border-color: #f59e0b;
+    background: #451a03;
+    box-shadow: 0 0 8px #f59e0b44;
+}
+.queue-card-new {
+    border-color: #22c55e;
+    background: #052e16;
+    box-shadow: 0 0 8px #22c55e44;
+}
+.qc-char {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #93c5fd;
+}
+.qc-char-leaf { color: #86efac; }
+.qc-freq { font-size: 0.7rem; color: #6b7280; margin-top: 2px; }
+
+/* ============================================================
+   TREE STEP-STATE NODE CLASSES
+   ============================================================ */
+.tree-node-future {
+    fill: transparent;
+    stroke: #374151;
+    stroke-width: 1.5;
+    stroke-dasharray: 4 3;
+}
+.tree-node-merging {
+    fill: #451a03;
+    stroke: #f59e0b;
+    stroke-width: 2.5;
+    filter: drop-shadow(0 0 6px #f59e0b66);
+}
+.tree-node-new {
+    fill: #052e16;
+    stroke: #22c55e;
+    stroke-width: 2.5;
+    filter: drop-shadow(0 0 6px #22c55e66);
+}
+.tree-edge-future {
+    stroke: #1f2937;
+    stroke-width: 1.5;
+    stroke-dasharray: 4 3;
+}
+
+/* ============================================================
+   RLE VISUALIZATION
+   ============================================================ */
+.rle-run-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.625rem 0.875rem;
+    background: #111827;
+    border: 1px solid;
+    border-radius: 0.5rem;
+    min-width: 3rem;
+    transition: transform 0.15s;
+    cursor: default;
+}
+.rle-run-block:hover { transform: translateY(-2px); }
+.rle-run-char {
+    font-family: 'Fira Code', monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+.rle-run-count { font-size: 0.7rem; color: #9ca3af; margin-top: 2px; }
+.rle-run-token { font-family: 'Fira Code', monospace; font-size: 0.8rem; font-weight: 600; margin-top: 4px; }
+
+/* ============================================================
+   COMPARISON TABLE
+   ============================================================ */
+.comp-table { border-collapse: collapse; }
+.comp-th {
+    padding: 0.625rem 1rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #6b7280;
+    border-bottom: 1px solid #374151;
+}
+.comp-td { padding: 0.875rem 1rem; border-bottom: 1px solid #1f2937; vertical-align: middle; color: #d1d5db; }
+.comp-row:last-child .comp-td { border-bottom: none; }
+.comp-row:hover .comp-td { background: #111827; }
+.compare-row-winner .comp-td { background: #052e16; }
+.compare-badge {
+    display: inline-block;
+    font-size: 0.6rem;
+    padding: 0.1rem 0.45rem;
+    background: #166534;
+    color: #86efac;
+    border-radius: 9999px;
+    margin-left: 0.4rem;
+    vertical-align: middle;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* ============================================================
+   FILE COMPRESSION SECTION
+   ============================================================ */
+
+/* Drop zone */
+.file-drop-zone {
+    border: 2px dashed #374151;
+    border-radius: 0.75rem;
+    padding: 3rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative;
+}
+.file-drop-zone:hover,
+.file-drop-active {
+    border-color: #2563eb;
+    background: #1e293b;
+}
+.file-drop-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
+    line-height: 1;
+}
+.file-drop-primary {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #e5e7eb;
+    margin: 0;
+}
+.file-drop-secondary {
+    font-size: 0.875rem;
+    color: #9ca3af;
+    margin-top: 0.25rem;
+}
+.file-drop-link {
+    color: #60a5fa;
+    text-decoration: underline;
+}
+.file-drop-hint {
+    font-size: 0.75rem;
+    color: #4b5563;
+    margin-top: 0.5rem;
+}
+.file-input-hidden {
+    position: absolute;
+    width: 0;
+    height: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Error banner */
+.file-error {
+    margin-top: 0.75rem;
+    padding: 0.625rem 1rem;
+    background: #450a0a;
+    border: 1px solid #b91c1c;
+    border-radius: 0.5rem;
+    color: #fca5a5;
+    font-size: 0.875rem;
+}
+
+/* Processing spinner */
+.file-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 2.5rem;
+}
+.file-spinner-ring {
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 3px solid #374151;
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+.file-spinner-label {
+    font-size: 0.875rem;
+    color: #9ca3af;
+}
+
+/* Sample truncation notice */
+.file-sample-notice {
+    padding: 0.5rem 0.875rem;
+    background: #422006;
+    border: 1px solid #b45309;
+    border-radius: 0.5rem;
+    color: #fde68a;
+    font-size: 0.8rem;
+}
+
+/* File preview */
+.file-preview-image {
+    max-width: 100%;
+    max-height: 260px;
+    border-radius: 0.5rem;
+    border: 1px solid #374151;
+    object-fit: contain;
+}
+.file-preview-text {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.8rem;
+    color: #d1d5db;
+    background: #111827;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 200px;
+    overflow-y: auto;
+}
+.file-preview-hex {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.75rem;
+    color: #6b7280;
+    background: #111827;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 160px;
+    overflow-y: auto;
+    line-height: 1.7;
+}
+
+/* Size comparison bars */
+.file-size-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+.file-size-bar-label {
+    font-size: 0.8rem;
+    color: #9ca3af;
+    width: 6.5rem;
+    flex-shrink: 0;
+    text-align: right;
+}
+.file-size-bar-track {
+    flex: 1;
+    height: 1.125rem;
+    background: #111827;
+    border-radius: 9999px;
+    overflow: hidden;
+}
+.file-size-bar-fill {
+    height: 100%;
+    border-radius: 9999px;
+    transition: width 0.4s ease-out;
+    min-width: 4px;
+}
+.file-bar-orig { background: linear-gradient(90deg, #374151, #6b7280); }
+.file-bar-huff { background: linear-gradient(90deg, #1d4ed8, #6d28d9); }
+.file-bar-rle  { background: linear-gradient(90deg, #065f46, #047857); }
+.file-size-bar-value {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.75rem;
+    color: #9ca3af;
+    width: 5.5rem;
+    flex-shrink: 0;
+}
+
+/* Download buttons */
+.file-dl-btn {
+    padding: 0.5rem 1.25rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: #1f2937;
+    color: #e5e7eb;
+    border: 1px solid #374151;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+}
+.file-dl-btn:hover:not(:disabled) {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: white;
+}
+.file-dl-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Educational notes */
+.file-edu-note {
+    padding: 1rem 1.25rem;
+    background: #111827;
+    border-left: 3px solid #2563eb;
+    border-radius: 0 0.5rem 0.5rem 0;
+    color: #d1d5db;
+    font-size: 0.875rem;
+    line-height: 1.6;
+}
+.file-edu-note strong { color: #93c5fd; }
